@@ -41,3 +41,8 @@ class SignUpSerializer(serializers.ModelSerializer):
         user.save()
         return user
     
+class allcategorySerializer(serializers.ModelSerializer):
+    sub_menu=categoryModelSerializer(source="category_set",many=True,read_only=True)
+    class Meta:
+        model=category
+        fields="__all__"

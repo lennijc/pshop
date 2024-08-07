@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "rest_framework",
     'rest_framework_simplejwt',
     'core',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -68,6 +69,7 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -107,7 +109,7 @@ DATABASES = {
         'NAME': os.getenv('DB_NAME'),
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASS'),  
-        'HOST': '127.0.0.1',  
+        'HOST': os.getenv("HOST") ,
         'PORT': '3306',  
         'OPTIONS': {  
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"  
@@ -164,3 +166,6 @@ AUTHENTICATION_BACKENDS = [
     'core.backend.CustomAuthenticationBackend', 
     'django.contrib.auth.backends.ModelBackend',  # Default backend
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
+

@@ -13,7 +13,7 @@ class theme(models.Model):
 class category(models.Model):
     title=models.CharField(max_length=255)
     description=models.TextField(null=True,blank=True)
-    main_category=models.ForeignKey('self',on_delete=models.SET_NULL,null=True)
+    main_category=models.ForeignKey('self',on_delete=models.SET_NULL,null=True,default=None,blank=True)
     def __str__(self) -> str:
         return self.title
     

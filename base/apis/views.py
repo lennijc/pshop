@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import SignUpSerializer,userSerializer
+from .serializers import SignUpSerializer,userSerializer,allcategorySerializer
 
 
 class ThemeModelViewSet(viewsets.ModelViewSet):
@@ -14,7 +14,7 @@ class ThemeModelViewSet(viewsets.ModelViewSet):
     
 class categoryModelViewSet(viewsets.ModelViewSet):
     queryset=category.objects.all()
-    serializer_class=categoryModelSerializer
+    serializer_class=allcategorySerializer
     
 class SignUpAPIView(APIView):
     def post(self, request):
