@@ -1,6 +1,6 @@
 from django.urls import path,include
 from rest_framework.routers import DefaultRouter
-from .views import ThemeModelViewSet,SignUpAPIView,categoryModelViewSet,commentViewset
+from .views import ThemeModelViewSet,SignUpAPIView,categoryModelViewSet,commentViewset,getUserInfo,getRelatedTheme
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -16,4 +16,6 @@ urlpatterns = [
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),#login
     path('login/refresh/', TokenRefreshView.as_view(), name='token_refresh'),#new refresh token
     path('signup/', SignUpAPIView.as_view(), name='signup'),#signup
+    path('core/getme/', getUserInfo.as_view(), name='getme'),
+    path('relatedTheme/<str:href>/', getRelatedTheme.as_view(), name='relatedtheme'),
 ]

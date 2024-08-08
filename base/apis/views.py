@@ -1,23 +1,26 @@
 from rest_framework import viewsets
 from ..models import theme,category,comment
+from django.contrib.auth import get_user_model
 from .serializers import ThemeModelSerializer,categoryModelSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import SignUpSerializer,userSerializer,allcategorySerializer,commentSerializer,allCommentSerializer
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView,RetrieveAPIView
 from rest_framework.decorators import action
 from django.http import QueryDict
 from django.shortcuts import get_object_or_404
-from rest_framework.permissions import IsAdminUser,IsAuthenticated
+from rest_framework.permissions import IsAdminUser,IsAuthenticated,IsAuthenticatedOrReadOnly,SAFE_METHODS,AllowAny
+from .permissions import isAdminOrReadonly
 
 
-
+User = get_user_model()
 class ThemeModelViewSet(viewsets.ModelViewSet):
     queryset = theme.objects.all()
     serializer_class = ThemeModelSerializer
-    @action(detail=False, methods=['get'], url_path='(?P<href>[^/.]+)')
+    permission_classes=[isAdminOrReadonly]
+    @action(detail=False, methods=['get'], url_path='(?P<href>[^/.]+)',permission_classes=[AllowAny])
     def themes_by_category(self, request, href=None):
         #get the href of the category and return the corresponding themes.
         try:
@@ -34,6 +37,7 @@ class ThemeModelViewSet(viewsets.ModelViewSet):
 class categoryModelViewSet(viewsets.ModelViewSet):
     queryset=category.objects.all()
     serializer_class=allcategorySerializer
+    permission_classes=[isAdminOrReadonly]
     
 class SignUpAPIView(APIView):
     def post(self, request):
@@ -47,32 +51,24 @@ class SignUpAPIView(APIView):
             'refresh_token': str(refresh),
         })
 
+
 class commentViewset(viewsets.ModelViewSet):
     queryset=comment.objects.all()
-    serializer_class=commentSerializer
+    permission_classes=[IsAuthenticatedOrReadOnly]
     def get_serializer_class(self):
         """Determine the serializer class based on the action."""
-        if self.action in ['list', 'retrieve']:
+        if self.request.method in SAFE_METHODS:
             return allCommentSerializer
         else:
             return commentSerializer
-        return super().get_serializer_class()
+        
     def create(self, request, *args, **kwargs):
         theme_href=request.data.pop("themeHref")
         theme_instance=get_object_or_404(theme,href=theme_href)
         request.data["theme"]=theme_instance.id
         return super().create(request,*args,**kwargs)
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions this view requires.
-        """
-        if self.action in ['answerComment',"create"]:
-            self.permission_classes = [IsAuthenticated]  # Allow all users to answer comments
-        else:
-            self.permission_classes = [IsAdminUser]  # Restrict other actions to admin users
-        return super().get_permissions()
     
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"],permission_classes=[IsAuthenticated])
     def answerComment(self, request, *args, **kwargs):
         mainCommentID = self.kwargs["pk"]
         mainCommentInstance = get_object_or_404(comment, pk=mainCommentID)
@@ -80,22 +76,36 @@ class commentViewset(viewsets.ModelViewSet):
         mainCommentInstance.save()
         # also we could add the new comment data to the request.data and pass the data to the self.create(request)
         #the answer has to inherit the course or article from the mainCommentInstance as this is an answer to that mainComment
+        # try:
         answer_comment_data = {
-            "mainCommentID": mainCommentID,
-            "creator": request.user.id, 
-            "body":request.data["body"],
-            "course": mainCommentInstance.course_id,  
-            "article": mainCommentInstance.article_id,
-            "answer": 1,
-            "isAnswer": True,
-            "score": 5,
-        }
+                "mainCommentID": mainCommentID,
+                "creator": request.user.id, 
+                "body":request.data["body"],
+                "theme":mainCommentInstance.theme_id,
+                "answer": 1,
+                "isAnswer": True,
+                "score": 5,
+            }
         serializer = self.get_serializer(data=answer_comment_data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        # except Exception as e:
+        #     return Response({"error":str(e)},status=status.HTTP_400_BAD_REQUEST)
         
+class getUserInfo(RetrieveAPIView):
+    permission_classes=[IsAuthenticated]
+    serializer_class=userSerializer
+    def get_object(self):
+        obj = get_object_or_404(User,id=self.request.user.id)
+        return obj
+        
+class getRelatedTheme(ListAPIView):
+    serializer_class=ThemeModelSerializer
+    def get_queryset(self):
+        theme_instance=get_object_or_404(theme,href=self.kwargs["href"])
+        return theme.objects.filter(category=theme_instance.category)
         
         
     
