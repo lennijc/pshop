@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import theme,category
+from ..models import theme,category,comment
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import PrimaryKeyRelatedField
 
@@ -9,11 +9,8 @@ User=get_user_model()
 class userSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
-        fields="__all__"
+        exclude=["password"]
     
-    
-
-        
 class categoryModelSerializer(serializers.ModelSerializer):
     class Meta:
         model=category
@@ -46,21 +43,26 @@ class allcategorySerializer(serializers.ModelSerializer):
     class Meta:
         model=category
         fields="__all__"
-        
-class CategoryIDField(PrimaryKeyRelatedField):
-    def to_internal_value(self, data):
-        # During deserialization, convert the ID to the actual category instance
-        return self.queryset.get(id=data)
-
-    def to_representation(self, value):
-        # During serialization, return just the ID
-        print(value.title)
-        return value
-    
 class ThemeModelSerializer(serializers.ModelSerializer):
     category_detail=allcategorySerializer(source="category",read_only=True)
     class Meta:
         model = theme
         fields = '__all__'
+        
+class commentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=comment
+        fields="__all__"
+        
+class allCommentSerializer(serializers.ModelSerializer):
+    creator=userSerializer(read_only=True)
+    course=serializers.SlugRelatedField(slug_field="name",read_only=True)
+    #answer content is the reverse of maincommentID because mainCommentID is refering to the question or mainComment
+    #but answer content is refering to the answer or the reply comment to the mainComment
+    answerContent=commentSerializer(source="replies",many=True,read_only=True)
+    class Meta:
+        model=comment
+        fields="__all__"
+
 
 

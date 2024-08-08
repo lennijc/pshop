@@ -1,6 +1,6 @@
 from django.urls import path,include
 from rest_framework.routers import DefaultRouter
-from .views import ThemeModelViewSet,SignUpAPIView,categoryModelViewSet
+from .views import ThemeModelViewSet,SignUpAPIView,categoryModelViewSet,commentViewset
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -9,6 +9,7 @@ from rest_framework_simplejwt.views import (
 router = DefaultRouter()
 router.register(r'theme', ThemeModelViewSet)
 router.register(r'category', categoryModelViewSet)
+router.register(r'comment', commentViewset)
 
 urlpatterns = [
     path('', include(router.urls)),
