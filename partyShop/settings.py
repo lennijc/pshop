@@ -46,9 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'base',
     "rest_framework",
+    'corsheaders',
     'rest_framework_simplejwt',
     'core',
-    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -98,6 +98,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'partyShop.wsgi.application'
+
+CORS_ALLOW_ALL_ORIGINS=True
 
 
 # Database
@@ -167,5 +169,5 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Default backend
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+
 

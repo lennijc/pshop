@@ -17,6 +17,7 @@ class category(models.Model):
     main_category=models.ForeignKey('self',on_delete=models.SET_NULL,null=True,default=None,blank=True)
     def __str__(self) -> str:
         return self.title
+    
 class comment(models.Model):
     body = models.TextField()
     theme=models.ForeignKey(theme,on_delete=models.CASCADE)
