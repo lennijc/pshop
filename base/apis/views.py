@@ -20,7 +20,7 @@ class ThemeModelViewSet(viewsets.ModelViewSet):
     queryset = theme.objects.all()
     serializer_class = ThemeModelSerializer
     permission_classes=[isAdminOrReadonly]
-    @action(detail=False, methods=['get'], url_path='(?P<href>[^/.]+)',permission_classes=[AllowAny])
+    @action(detail=False, methods=['get'], url_path='category/(?P<href>[^/.]+)',permission_classes=[AllowAny])
     def themes_by_category(self, request, href=None):
         #get the href of the category and return the corresponding themes.
         try:
