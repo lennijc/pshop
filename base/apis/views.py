@@ -13,11 +13,11 @@ from django.http import QueryDict
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAdminUser,IsAuthenticated,IsAuthenticatedOrReadOnly,SAFE_METHODS,AllowAny
 from .permissions import isAdminOrReadonly
-
+from django.db.models import Avg
 
 User = get_user_model()
 class ThemeModelViewSet(viewsets.ModelViewSet):
-    queryset = theme.objects.all()
+    queryset = theme.objects.all().prefetch_related("comments")
     serializer_class = ThemeModelSerializer
     permission_classes=[isAdminOrReadonly]
     @action(detail=False, methods=['get'], url_path='category/(?P<href>[^/.]+)',permission_classes=[AllowAny])
@@ -35,9 +35,10 @@ class ThemeModelViewSet(viewsets.ModelViewSet):
             
         
 class categoryModelViewSet(viewsets.ModelViewSet):
-    queryset=category.objects.all()
     serializer_class=allcategorySerializer
     permission_classes=[isAdminOrReadonly]
+    def get_queryset(self):
+        return category.objects.filter(main_category=None)
     
 class SignUpAPIView(APIView):
     def post(self, request):
@@ -54,18 +55,27 @@ class SignUpAPIView(APIView):
 
 class commentViewset(viewsets.ModelViewSet):
     queryset=comment.objects.all()
-    permission_classes=[IsAuthenticatedOrReadOnly]
+    permission_classes=[# `IsAuthenticatedOrReadOnly` is a permission class in Django REST framework
+    # that allows read-only access to authenticated users while allowing
+    # unauthenticated users to have read-only access as well. Authenticated users
+    # are granted full permissions, including read, write, update, and delete
+    # operations, while unauthenticated users are only allowed to perform read
+    # operations. This permission class is useful for providing controlled access
+    # to certain views where some level of authentication is required for
+    # modifying data, but read-only access is allowed for everyone.
+    IsAuthenticatedOrReadOnly]
     def get_serializer_class(self):
         """Determine the serializer class based on the action."""
         if self.request.method in SAFE_METHODS:
             return allCommentSerializer
         else:
             return commentSerializer
-        
+    #sending commnet via post request    
     def create(self, request, *args, **kwargs):
         theme_href=request.data.pop("themeHref")
         theme_instance=get_object_or_404(theme,href=theme_href)
         request.data["theme"]=theme_instance.id
+        request.data["creator"]=request.user.id
         return super().create(request,*args,**kwargs)
     
     @action(detail=True, methods=["post"],permission_classes=[IsAuthenticated])
@@ -93,6 +103,14 @@ class commentViewset(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         # except Exception as e:
         #     return Response({"error":str(e)},status=status.HTTP_400_BAD_REQUEST)
+    #get the comments in the theme info page base on the href of the theme being sent by client
+    @action(detail=False,methods=["GET"],url_path='theme_comments/(?P<href>[^/.]+)')
+    def theme_comments(self,request,*args,**kwargs):
+        theme_instance=get_object_or_404(theme,href=kwargs["href"])
+        comments=comment.objects.filter(theme=theme_instance.id)
+        average_score=comments.aggregate(Avg("score"))["score__avg"]
+        comments_serializer=allCommentSerializer(comments,many=True,context={"average_score":average_score})
+        return Response(comments_serializer.data,status=status.HTTP_200_OK)
         
 class getUserInfo(RetrieveAPIView):
     permission_classes=[IsAuthenticated]
@@ -107,5 +125,19 @@ class getRelatedTheme(ListAPIView):
         theme_instance=get_object_or_404(theme,href=self.kwargs["href"])
         return theme.objects.filter(category=theme_instance.category)
         
-        
+class getPopularThemes(ListAPIView):
+    serializer_class=ThemeModelSerializer
+    def get_queryset(self):
+        return theme.objects.annotate(average_score=Avg("comments__score")).order_by("-average_score")
     
+class getLastThemes(ListAPIView):
+    serializer_class=ThemeModelSerializer
+    def get_queryset(self):
+        return theme.objects.all().order_by("-created_at","-updated_at")
+    
+class getRelatedSubMenus(ListAPIView):
+    serializer_class=categoryModelSerializer
+    def get_queryset(self):
+        submenu_instance=get_object_or_404(category,href=self.kwargs["href"])
+        return category.objects.filter(main_category=submenu_instance.main_category_id)
+        

@@ -1,6 +1,9 @@
 from django.urls import path,include
 from rest_framework.routers import DefaultRouter
-from .views import ThemeModelViewSet,SignUpAPIView,categoryModelViewSet,commentViewset,getUserInfo,getRelatedTheme
+from .views import (
+    ThemeModelViewSet,SignUpAPIView,categoryModelViewSet,commentViewset,
+    getUserInfo,getRelatedTheme,getPopularThemes,getLastThemes,getRelatedSubMenus
+                    )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -8,7 +11,7 @@ from rest_framework_simplejwt.views import (
 
 router = DefaultRouter()
 router.register(r'theme', ThemeModelViewSet)
-router.register(r'category', categoryModelViewSet)
+router.register(r'category', categoryModelViewSet,basename="category")
 router.register(r'comment', commentViewset)
 
 urlpatterns = [
@@ -18,4 +21,7 @@ urlpatterns = [
     path('signup/', SignUpAPIView.as_view(), name='signup'),#signup
     path('core/getme/', getUserInfo.as_view(), name='getme'),
     path('relatedTheme/<str:href>/', getRelatedTheme.as_view(), name='relatedtheme'),
+    path('topThemes/', getPopularThemes.as_view(), name='popularThemes'),
+    path('lastThemes/', getLastThemes.as_view(), name='lastThemes'),
+    path('similarSubmenus/<str:href>/', getRelatedSubMenus.as_view(), name='relatedSubmenus'),
 ]

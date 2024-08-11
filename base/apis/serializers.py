@@ -2,7 +2,7 @@ from rest_framework import serializers
 from ..models import theme,category,comment
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import PrimaryKeyRelatedField
-
+from django.db.models import Avg
 User=get_user_model()
 
 
@@ -45,10 +45,12 @@ class allcategorySerializer(serializers.ModelSerializer):
         fields="__all__"
 class ThemeModelSerializer(serializers.ModelSerializer):
     category_detail=allcategorySerializer(source="category",read_only=True)
+    average_score=serializers.SerializerMethodField()
     class Meta:
         model = theme
         fields = '__all__'
-        
+    def get_average_score(self,obj):
+        return obj.comments.aggregate(Avg('score'))['score__avg']
 class commentSerializer(serializers.ModelSerializer):
     class Meta:
         model=comment
@@ -63,6 +65,8 @@ class allCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model=comment
         fields="__all__"
+        
+
 
 
 
