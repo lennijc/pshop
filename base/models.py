@@ -44,6 +44,31 @@ class comment(models.Model):
     mainCommentID=models.ForeignKey('self',null=True,blank=True,on_delete=models.CASCADE,related_name="replies")
     def __str__(self) -> str:
         return str(self.creator)
+    
+class Article(models.Model):
+    title=models.CharField(max_length=255)
+    description=models.TextField()
+    body=models.TextField()
+    #cover=models.ImageField(upload_to=dynamic_upload_to,default="default/defImage.png")
+    href=models.CharField(max_length=255,unique=True)
+    category=models.ForeignKey(category,on_delete=models.PROTECT)
+    creator=models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
+    publish=models.BooleanField(default=False)
+    def __str__(self) -> str:
+        return self.title
+    
+class contact(models.Model):
+    name=models.CharField(max_length=255)
+    email= models.EmailField()
+    phone=models.CharField(max_length=11,null=True)
+    body=models.TextField()        
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
+    answer=models.BooleanField(default=False)
+    def __str__(self):
+        return self.name
 
 
     

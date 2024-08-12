@@ -1,12 +1,13 @@
 from rest_framework import viewsets
-from ..models import theme,category,comment
+from ..models import theme,category,comment,Article
 from django.contrib.auth import get_user_model
 from .serializers import ThemeModelSerializer,categoryModelSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import SignUpSerializer,userSerializer,allcategorySerializer,commentSerializer,allCommentSerializer
+from .serializers import (SignUpSerializer,userSerializer,allcategorySerializer,
+                          commentSerializer,allCommentSerializer,allArticleSerializer,contactserializer)
 from rest_framework.generics import ListAPIView,RetrieveAPIView
 from rest_framework.decorators import action
 from django.http import QueryDict
@@ -31,8 +32,12 @@ class ThemeModelViewSet(viewsets.ModelViewSet):
             return Response(theme_serializer.data,status=status.HTTP_200_OK)
         except:
             return Response({"error":"something went wronge"},status=status.HTTP_400_BAD_REQUEST)
-                
-            
+        
+    @action(detail=True,methods=["get"],permission_classes=[AllowAny])
+    def themeInfo(self,request,*args,**kwargs):
+        theme_instance=get_object_or_404(theme,href=kwargs["pk"])         
+        serializer = self.get_serializer(theme_instance)
+        return Response(serializer.data,status=status.HTTP_200_OK)   
         
 class categoryModelViewSet(viewsets.ModelViewSet):
     serializer_class=allcategorySerializer
@@ -140,4 +145,48 @@ class getRelatedSubMenus(ListAPIView):
     def get_queryset(self):
         submenu_instance=get_object_or_404(category,href=self.kwargs["href"])
         return category.objects.filter(main_category=submenu_instance.main_category_id)
-        
+    
+class searchApi(APIView):
+    def get(self,request,query):
+        theme_res=theme.objects.filter(
+            name__icontains=query)|theme.objects.filter(
+            description__icontains=query)|theme.objects.filter(
+            href__icontains=query)
+        article_res=Article.objects.filter(
+            title__icontains=query)|Article.objects.filter(
+            description__icontains=query)|Article.objects.filter(
+            href__icontains=query)
+        theme_serializer=ThemeModelSerializer(theme_res,many=True)
+        article_serializer=allArticleSerializer(article_res,many=True)
+        return Response({"themes":theme_serializer.data,"articles":article_serializer.data})
+    
+class articleViewset(viewsets.ModelViewSet):
+    queryset = Article.objects.all()
+    permission_classes=[isAdminOrReadonly]
+    serializer_class=allArticleSerializer
+    @action(detail=True,methods=["get"],permission_classes=[AllowAny])
+    def articleInfo(self,request,*args,**kwargs):
+        article_instance=get_object_or_404(Article,href=kwargs["pk"])         
+        serializer = self.get_serializer(article_instance)
+        return Response(serializer.data,status=status.HTTP_200_OK)  
+    # @action(detail=False, methods=['get'], url_path='category/(?P<href>[^/.]+)',permission_classes=[AllowAny])
+    # def themes_by_category(self, request, href=None):
+    #     #get the href of the category and return the corresponding themes.
+    #     try:
+    #         # category_instance=category.objects.get(href=href)
+    #         # themes = theme.objects.filter(category=category_instance.id)
+    #         themes=theme.objects.filter(category__href=href)
+    #         theme_serializer=ThemeModelSerializer(themes,many=True)
+    #         return Response(theme_serializer.data,status=status.HTTP_200_OK)
+    #     except:
+    #         return Response({"error":"something went wronge"},status=status.HTTP_400_BAD_REQUEST)
+    
+    class ContactUsView(APIView):
+        def post(self, request, format=None):
+            serializer = contactserializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+
+
