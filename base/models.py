@@ -10,6 +10,7 @@ class theme(models.Model):
     category=models.ForeignKey('category',on_delete=models.SET_NULL,null=True)
     href=models.CharField(max_length=255,unique=True)
     price=models.IntegerField(default=0)
+    cover=models.ImageField(null=True,default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     def __str__(self) -> str:
@@ -49,7 +50,7 @@ class Article(models.Model):
     title=models.CharField(max_length=255)
     description=models.TextField()
     body=models.TextField()
-    #cover=models.ImageField(upload_to=dynamic_upload_to,default="default/defImage.png")
+    cover=models.ImageField(null=True,default=None)
     href=models.CharField(max_length=255,unique=True)
     category=models.ForeignKey(category,on_delete=models.PROTECT)
     creator=models.ForeignKey(User,on_delete=models.SET_NULL,null=True)

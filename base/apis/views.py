@@ -60,15 +60,7 @@ class SignUpAPIView(APIView):
 
 class commentViewset(viewsets.ModelViewSet):
     queryset=comment.objects.all()
-    permission_classes=[# `IsAuthenticatedOrReadOnly` is a permission class in Django REST framework
-    # that allows read-only access to authenticated users while allowing
-    # unauthenticated users to have read-only access as well. Authenticated users
-    # are granted full permissions, including read, write, update, and delete
-    # operations, while unauthenticated users are only allowed to perform read
-    # operations. This permission class is useful for providing controlled access
-    # to certain views where some level of authentication is required for
-    # modifying data, but read-only access is allowed for everyone.
-    IsAuthenticatedOrReadOnly]
+    permission_classes=[IsAuthenticatedOrReadOnly]
     def get_serializer_class(self):
         """Determine the serializer class based on the action."""
         if self.request.method in SAFE_METHODS:
@@ -116,7 +108,32 @@ class commentViewset(viewsets.ModelViewSet):
         average_score=comments.aggregate(Avg("score"))["score__avg"]
         comments_serializer=allCommentSerializer(comments,many=True,context={"average_score":average_score})
         return Response(comments_serializer.data,status=status.HTTP_200_OK)
-        
+    
+    @action(methods=['put'], detail=True)
+    def accept_reject_comment(self, request,*args,**kwargs):
+        """
+        Toggle the 'answer' field of a comment.
+        """
+        try:
+            comment = self.get_object()
+            comment.answer = not comment.answer  # Toggle the answer field
+            comment.save()
+            serializer=commentSerializer(comment)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(methods=['put'], detail=True)
+    def toggle_best_comment(self, request,*args,**kwargs):
+        try:
+            comment = self.get_object()
+            comment.best_comment = not comment.best_comment  # Toggle the best_comment field
+            comment.save()
+            serializer=commentSerializer(comment)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
 class getUserInfo(RetrieveAPIView):
     permission_classes=[IsAuthenticated]
     serializer_class=userSerializer
@@ -181,12 +198,12 @@ class articleViewset(viewsets.ModelViewSet):
     #     except:
     #         return Response({"error":"something went wronge"},status=status.HTTP_400_BAD_REQUEST)
     
-    class ContactUsView(APIView):
-        def post(self, request, format=None):
-            serializer = contactserializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+class ContactUsView(APIView):
+    def post(self, request, format=None):
+        serializer = contactserializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
             
 
 

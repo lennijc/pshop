@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ThemeModelViewSet,SignUpAPIView,categoryModelViewSet,commentViewset,
     getUserInfo,getRelatedTheme,getPopularThemes,getLastThemes,getRelatedSubMenus,searchApi,
-    articleViewset
+    articleViewset,ContactUsView
                     )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -27,4 +27,5 @@ urlpatterns = [
     path('lastThemes/', getLastThemes.as_view(), name='lastThemes'),
     path('similarSubmenus/<str:href>/', getRelatedSubMenus.as_view(), name='relatedSubmenus'),
     path('search/<str:query>/', searchApi.as_view(), name='searchQuery'),
+    path('contact/', ContactUsView.as_view(), name='contactUs'),
 ]
