@@ -71,9 +71,29 @@ class contact(models.Model):
     def __str__(self):
         return self.name
 
-
+class reservation(models.Model):
+    color=models.JSONField(null=True,blank=True)
+    theme=models.ForeignKey(theme,on_delete=models.SET_NULL,null=True)
+    customer=models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
+    date=models.DateField(null=True,blank=True)
+    location=models.JSONField(null=True,blank=True)
+    address=models.TextField(null=True,blank=True)
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('unsuccessful', 'Unsuccessful'),
+    )
+    status = models.CharField(
+        max_length=12,
+        choices=STATUS_CHOICES,
+        default=STATUS_CHOICES[0][0],
+    )
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return (str(self.date) if self.date is not None else "date:none") + " " + (str(self.address) if self.address is not None else "Address:none")
     
-
+    
     
 
     

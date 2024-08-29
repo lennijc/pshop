@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (SignUpSerializer,userSerializer,allcategorySerializer,
-                          commentSerializer,allCommentSerializer,allArticleSerializer,contactserializer)
+                          commentSerializer,allCommentSerializer,allArticleSerializer,
+                          contactserializer,reservationSerializer,reservation as Reservation)
 from rest_framework.generics import ListAPIView,RetrieveAPIView
 from rest_framework.decorators import action
 from django.http import QueryDict
@@ -205,5 +206,56 @@ class ContactUsView(APIView):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
             
-
-
+class reservation_viewset(viewsets.ModelViewSet):
+    permission_classes=[IsAuthenticated]
+    serializer_class=reservationSerializer
+    queryset=Reservation.objects.all()
+    @action(detail=False, methods=['post',"get"], url_path='reserve/(?P<theme_href>[^/.]+)',permission_classes=[IsAuthenticated])
+    def process_step(self, request, theme_href=None):
+        #getting the occurring reservation
+        if request.method == "GET":
+            reservation=get_object_or_404(Reservation,customer=request.user ,theme=get_object_or_404(theme,href=theme_href))
+            serializer=self.get_serializer(reservation)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        
+        if request.method == "POSt":
+            if not request.data :
+                return Response({"error":"reqeust body cannot be empty"},status=status.HTTP_400_BAD_REQUEST)
+            # if list(request.data.keys())[0] not in ["color","date","address","location"]:
+            request_data_list=list(request.data)
+            if not any(word in request_data_list for word in ["color","date","address","location"] ):
+                return Response({"error":"incorrect request body given"},status=status.HTTP_400_BAD_REQUEST)
+            
+            state=list(request.data.keys())[0]
+            theme_instance=get_object_or_404(theme,href=theme_href)
+            reservation, created = Reservation.objects.get_or_create(customer=request.user, theme=theme_instance)
+            if state == 'color':
+                reservation.color=request.data.get("color")
+                reservation.save()
+                serializer=self.get_serializer(reservation)
+                return Response({'color set': serializer.data }, status=status.HTTP_200_OK)
+            
+            elif state == 'date':
+                date = request.data.get('date')
+                if not reservation.color:
+                    return Response({'error': 'color is required before date'}, status=status.HTTP_400_BAD_REQUEST)
+                reservation.date=date
+                reservation.save()
+                serializer=self.get_serializer(reservation)
+                return Response({'date set': serializer.data}, status=status.HTTP_200_OK)
+            
+            elif state == 'address' or state=="location":
+                if not reservation.color or not reservation.date:
+                    return Response({'error': 'color and date is required before address'}, status=status.HTTP_400_BAD_REQUEST)
+                reservation.address=request.data.get("address")
+                reservation.location=request.data.get("location")
+                reservation.status="done"
+                reservation.save()
+                serializer=self.get_serializer(reservation)
+                return Response({'address set': serializer.data}, status=status.HTTP_200_OK)
+            
+            else:
+                return Response({'error': 'unknown state'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+    
