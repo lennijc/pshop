@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from ..models import theme,category,comment,Article
+from ..models import theme,category,comment,Article,Question
 from django.contrib.auth import get_user_model
 from .serializers import ThemeModelSerializer,categoryModelSerializer
 from rest_framework.views import APIView
@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (SignUpSerializer,userSerializer,allcategorySerializer,
                           commentSerializer,allCommentSerializer,allArticleSerializer,
-                          contactserializer,reservationSerializer,reservation as Reservation)
+                          contactserializer,reservationSerializer,reservation as Reservation,normQuestionSerializer)
 from rest_framework.generics import ListAPIView,RetrieveAPIView
 from rest_framework.decorators import action
 from django.http import QueryDict
@@ -259,6 +259,9 @@ class reservation_viewset(viewsets.ModelViewSet):
             
             else:
                 return Response({'error': 'unknown state'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        
+            
+class normQuestionViewset(viewsets.ModelViewSet):
+    queryset=Question.objects.all()
+    serializer_class=normQuestionSerializer
+    permission_classes=[isAdminOrReadonly]
     

@@ -93,7 +93,13 @@ class reservation(models.Model):
     def __str__(self):
         return (str(self.date) if self.date is not None else "date:none") + " " + (str(self.address) if self.address is not None else "Address:none")
     
-    
+class Question(models.Model):
+    question=models.TextField()
+    answer=models.TextField()
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
+    def __str__(self) -> str:
+        return str(self.question + self.answer)[:80]
     
 
     

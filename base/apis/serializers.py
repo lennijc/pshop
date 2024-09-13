@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import theme,category,comment,Article,contact,reservation
+from ..models import theme,category,comment,Article,contact,reservation,Question
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import PrimaryKeyRelatedField
 from django.db.models import Avg
@@ -81,6 +81,11 @@ class allCommentSerializer(serializers.ModelSerializer):
 class reservationSerializer(serializers.ModelSerializer):
     class Meta:
         model=reservation
+        fields="__all__"
+        
+class normQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Question
         fields="__all__"
         
 
