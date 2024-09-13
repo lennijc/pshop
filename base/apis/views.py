@@ -69,9 +69,15 @@ class commentViewset(viewsets.ModelViewSet):
         else:
             return commentSerializer
     #sending commnet via post request    
-    def create(self, request, *args, **kwargs):
-        theme_href=request.data.pop("themeHref")
-        theme_instance=get_object_or_404(theme,href=theme_href)
+    # def create(self, request, *args, **kwargs):
+    #     theme_href=request.data.pop("themeHref")
+    #     theme_instance=get_object_or_404(theme,href=theme_href)
+    #     request.data["theme"]=theme_instance.id
+    #     request.data["creator"]=request.user.id
+    #     return super().create(request,*args,**kwargs)
+    @action(detail=False, methods=["post"],url_path='post_comment/(?P<href>[^/.]+)',permission_classes=[IsAuthenticated])
+    def post_comment(self,request,*args,**kwargs):
+        theme_instance=get_object_or_404(theme,href=self.kwargs["href"])
         request.data["theme"]=theme_instance.id
         request.data["creator"]=request.user.id
         return super().create(request,*args,**kwargs)
