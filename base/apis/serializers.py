@@ -64,13 +64,14 @@ class allArticleSerializer(serializers.ModelSerializer):
     # def get_average_score(self,obj):
     #     return obj.comments.aggregate(Avg('score'))['score__avg']
 class commentSerializer(serializers.ModelSerializer):
+    creator=userSerializer(read_only=True)
     class Meta:
         model=comment
         fields="__all__"
         
 class allCommentSerializer(serializers.ModelSerializer):
     creator=userSerializer(read_only=True)
-    course=serializers.SlugRelatedField(slug_field="name",read_only=True)
+    theme=serializers.SlugRelatedField(slug_field="name",read_only=True)
     #answer content is the reverse of maincommentID because mainCommentID is refering to the question or mainComment
     #but answer content is refering to the answer or the reply comment to the mainComment
     answerContent=commentSerializer(source="replies",many=True,read_only=True)
