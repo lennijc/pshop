@@ -270,4 +270,25 @@ class normQuestionViewset(viewsets.ModelViewSet):
     queryset=Question.objects.all()
     serializer_class=normQuestionSerializer
     permission_classes=[isAdminOrReadonly]
-    
+
+class UserViewset(viewsets.ModelViewSet):
+    serializer_class=userSerializer
+    permission_classes=[IsAdminUser]
+    queryset=User.objects.all()
+    def get_object(self):
+        if self.action=="change_profile":
+            return User.objects.get(id=self.request.user.id)
+        else:
+            return super().get_object()
+    @action(detail=False,methods=["put","patch"],permission_classes=[IsAuthenticated])
+    def change_profile(self,requset):
+        #the update method need the url pk but i dont want to have that so i manually added the pk here to be used
+        #another option is to overwrite the get_object function 
+        self.kwargs={"pk" : requset.user.id}
+        if requset.method == "PATCH":
+            self.update(requset,partial=True)
+            user=User.objects.get(id=requset.user.id)
+            return Response(self.serializer_class(user).data,status=status.HTTP_200_OK)
+        self.update(requset)
+        user=User.objects.get(id=requset.user.id)
+        return Response(self.serializer_class(user).data,status=status.HTTP_200_OK)

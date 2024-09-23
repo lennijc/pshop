@@ -106,7 +106,7 @@ CORS_ALLOW_ALL_ORIGINS=True
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {  
+        'default': {  
         'ENGINE': 'django.db.backends.mysql',  
         'NAME': os.getenv('DB_NAME'),
         'USER': os.getenv('DB_USER'),
@@ -115,8 +115,12 @@ DATABASES = {
         'PORT': '3306',  
         'OPTIONS': {  
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"  
-        }  
-    }  
+        }
+        } if os.getenv('DB_NAME') is not None else {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'mydatabase', # This is where you put the name of the db file.
+              # If one doesn't exist, it will be created at migration time. }
+        } 
 
 }
 
