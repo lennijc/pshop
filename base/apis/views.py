@@ -8,7 +8,8 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (SignUpSerializer,userSerializer,allcategorySerializer,
                           commentSerializer,allCommentSerializer,allArticleSerializer,
-                          contactserializer,reservationSerializer,reservation as Reservation,normQuestionSerializer)
+                          contactserializer,reservationSerializer,reservation as Reservation,normQuestionSerializer,
+                          ChangePasswordSerializer,changeProfileSerializer)
 from rest_framework.generics import ListAPIView,RetrieveAPIView
 from rest_framework.decorators import action
 from django.http import QueryDict
@@ -16,6 +17,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAdminUser,IsAuthenticated,IsAuthenticatedOrReadOnly,SAFE_METHODS,AllowAny
 from .permissions import isAdminOrReadonly
 from django.db.models import Avg
+from rest_framework.exceptions import ValidationError
 
 User = get_user_model()
 class ThemeModelViewSet(viewsets.ModelViewSet):
@@ -276,10 +278,15 @@ class UserViewset(viewsets.ModelViewSet):
     permission_classes=[IsAdminUser]
     queryset=User.objects.all()
     def get_object(self):
-        if self.action=="change_profile":
+        if self.action=="change_profile" or "change_password":
             return User.objects.get(id=self.request.user.id)
-        else:
-            return super().get_object()
+        return super().get_object()
+    
+    def get_serializer_class(self, *args, **kwargs):
+        if  self.action=="change_profile":
+            return changeProfileSerializer
+        return super().get_serializer_class()  
+      
     @action(detail=False,methods=["put","patch"],permission_classes=[IsAuthenticated])
     def change_profile(self,requset):
         #the update method need the url pk but i dont want to have that so i manually added the pk here to be used
@@ -292,3 +299,16 @@ class UserViewset(viewsets.ModelViewSet):
         self.update(requset)
         user=User.objects.get(id=requset.user.id)
         return Response(self.serializer_class(user).data,status=status.HTTP_200_OK)
+    
+    @action(detail=False,methods=["put"],permission_classes=[IsAuthenticated])
+    def change_password(self,request):
+        serializer=ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # validate_old_password:
+        user=request.user
+        if not user.check_password(serializer.validated_data["old_password"]):
+            raise ValidationError({"error":"old password was entered incorrectly!"})
+        user.set_password(serializer.validated_data["new_password"])
+        user.save()
+        return Response({"ok":"password changed successfully"},status=status.HTTP_200_OK)
+    

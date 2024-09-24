@@ -101,6 +101,9 @@ class Question(models.Model):
     def __str__(self) -> str:
         return str(self.question + self.answer)[:80]
     
-
-    
-    
+class Banned_user(models.Model):
+    phone = models.CharField(max_length=12, unique=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return self.phone

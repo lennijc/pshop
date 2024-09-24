@@ -3,8 +3,28 @@ from ..models import theme,category,comment,Article,contact,reservation,Question
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import PrimaryKeyRelatedField
 from django.db.models import Avg
+from django.contrib.auth.password_validation import validate_password
+
 User=get_user_model()
 
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)   
+    def validate_new_password(self,value):
+        validate_password(value)
+        return value
+    def validate(self, data):
+        if data["new_password"] != data["confirm_password"]:
+            raise serializers.ValidationError("new password and its confirmation didn't match")
+        return data
+    
+class changeProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=User
+        fields=["email","phone","first_name","last_name","name"]
+        
+    
 
 class userSerializer(serializers.ModelSerializer):
     class Meta:
