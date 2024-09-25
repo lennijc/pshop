@@ -195,6 +195,31 @@ class articleViewset(viewsets.ModelViewSet):
         article_instance=get_object_or_404(Article,href=kwargs["pk"])         
         serializer = self.get_serializer(article_instance)
         return Response(serializer.data,status=status.HTTP_200_OK)  
+    
+    @action(detail=False,methods=["post"],permission_classes=[IsAdminUser])
+    def publish_article(self,request,*args,**kwargs):
+        serializer = allArticleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(publish=True)
+        return Response({"ok":"your article published successfully"},status=status.HTTP_200_OK) 
+    
+    @action(detail=False,methods=["post"],permission_classes=[IsAdminUser])
+    def draft_article(self,request,*args,**kwargs):
+        serializer = allArticleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(publish=False)
+        return Response({"ok":"your article drafted successfully"},status=status.HTTP_200_OK)
+
+    @action(detail=True,methods=["put"],permission_classes=[IsAdminUser])
+    def publish_draft_article(self,request,*args,**kwargs):
+        article = Article.objects.get(id=kwargs["pk"])
+        if article.publish:
+            return Response({"error":"this article has been published already!"},status=status.HTTP_400_BAD_REQUEST)
+        article.publish = True
+        article.save()
+        return Response({"ok":"your draft article published successfully"},status=status.HTTP_200_OK)
+
+
     # @action(detail=False, methods=['get'], url_path='category/(?P<href>[^/.]+)',permission_classes=[AllowAny])
     # def themes_by_category(self, request, href=None):
     #     #get the href of the category and return the corresponding themes.
@@ -311,4 +336,5 @@ class UserViewset(viewsets.ModelViewSet):
         user.set_password(serializer.validated_data["new_password"])
         user.save()
         return Response({"ok":"password changed successfully"},status=status.HTTP_200_OK)
+    
     
