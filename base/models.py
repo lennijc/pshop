@@ -50,7 +50,7 @@ class Article(models.Model):
     title=models.CharField(max_length=255)
     description=models.TextField()
     body=models.TextField()
-    cover=models.ImageField(null=True,default=None,blank=True)
+    cover=models.ImageField(upload_to="article_pics",null=True,default=None,blank=True)
     href=models.CharField(max_length=255,unique=True)
     category=models.ForeignKey(category,on_delete=models.PROTECT)
     creator=models.ForeignKey(User,on_delete=models.SET_NULL,null=True)

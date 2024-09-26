@@ -18,6 +18,17 @@ from rest_framework.permissions import IsAdminUser,IsAuthenticated,IsAuthenticat
 from .permissions import isAdminOrReadonly
 from django.db.models import Avg
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.conf import settings
+from PIL import Image
+import io
+import tempfile
+import os
+from django.core.files.uploadedfile import InMemoryUploadedFile
+import io
+from PIL import Image
 
 User = get_user_model()
 class ThemeModelViewSet(viewsets.ModelViewSet):
@@ -190,24 +201,28 @@ class articleViewset(viewsets.ModelViewSet):
     queryset = Article.objects.all()
     permission_classes=[isAdminOrReadonly]
     serializer_class=allArticleSerializer
+    parser_classes=[MultiPartParser]
     @action(detail=True,methods=["get"],permission_classes=[AllowAny])
     def articleInfo(self,request,*args,**kwargs):
         article_instance=get_object_or_404(Article,href=kwargs["pk"])         
         serializer = self.get_serializer(article_instance)
         return Response(serializer.data,status=status.HTTP_200_OK)  
     
-    @action(detail=False,methods=["post"],permission_classes=[IsAdminUser])
+    @action(detail=False,methods=["post"],permission_classes=[AllowAny])
     def publish_article(self,request,*args,**kwargs):
+        print(request.data)
         serializer = allArticleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(publish=True)
+        image_url=upload_image(request.FILES.get("cover"))
+        serializer.save(publish=True,cover=image_url["url"])
         return Response({"ok":"your article published successfully"},status=status.HTTP_200_OK) 
     
-    @action(detail=False,methods=["post"],permission_classes=[IsAdminUser])
+    @action(detail=False,methods=["post"],permission_classes=[AllowAny])
     def draft_article(self,request,*args,**kwargs):
         serializer = allArticleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(publish=False)
+        image_url=upload_image(request.FILES.get("cover"))
+        serializer.save(publish=False,cover=image_url["url"])
         return Response({"ok":"your article drafted successfully"},status=status.HTTP_200_OK)
 
     @action(detail=True,methods=["put"],permission_classes=[IsAdminUser])
@@ -219,6 +234,62 @@ class articleViewset(viewsets.ModelViewSet):
         article.save()
         return Response({"ok":"your draft article published successfully"},status=status.HTTP_200_OK)
 
+def upload_image(file: InMemoryUploadedFile):
+    # Validate the file
+    if not isinstance(file, InMemoryUploadedFile):
+        raise ValueError("Invalid file type")
+    
+    # Read the file in chunks
+    image_data = io.BytesIO()
+    for chunk in file.chunks():
+        image_data.write(chunk)
+    image_data.seek(0)  # Reset the file pointer
+
+    # Verify it's an image
+    try:
+        with Image.open(image_data) as img:
+            width, height = img.size
+            mode = img.mode
+    except Exception as e:
+        raise ValueError(f"Failed to open image: {str(e)}")
+
+    # Determine the file extension based on the MIME type
+    mime_type, _ = file.content_type.split('/')
+    if mime_type == 'image':
+        extension = {'png': '.png', 'jpeg': '.jpg', 'gif': '.gif',"jfif":".jfif"}[_.lower()]
+    else:
+        raise ValueError("Unsupported image format")
+
+    # Generate a unique filename
+    filename = f"image_{id(file)}{extension}"
+
+    # Save the image to storage
+    try:
+        # Use io.BytesIO as the file object
+        path = default_storage.save(filename, io.BytesIO(image_data.getvalue()))
+        
+        # Open the image to verify it was saved correctly
+        # img = Image.open(io.BytesIO(image_data.getvalue()))
+        
+        # # Resize the image if needed (optional)
+        # max_width, max_height = 800, 600  # Adjust these values as needed
+        # if img.width > max_width or img.height > max_height:
+        #     img.thumbnail((max_width, max_height), Image.LANCZOS)
+        #     img.save(path)
+        
+        return {"message": "Image uploaded successfully", "url": path}
+    except Exception as e:
+        # Clean up if something goes wrong
+        if hasattr(default_storage, 'delete'):
+            default_storage.delete(filename)
+        elif hasattr(settings, 'DEFAULT_FILE_STORAGE') and callable(getattr(settings, 'DEFAULT_FILE_STORAGE')):
+            storage_class = getattr(settings, 'DEFAULT_FILE_STORAGE')
+            storage_instance = storage_class()
+            storage_instance.delete(filename)
+        else:
+            print(f"Warning: Unable to find or instantiate default file storage.")
+        
+        raise Exception(f"Failed to upload image: {str(e)}")
 
     # @action(detail=False, methods=['get'], url_path='category/(?P<href>[^/.]+)',permission_classes=[AllowAny])
     # def themes_by_category(self, request, href=None):
@@ -337,4 +408,8 @@ class UserViewset(viewsets.ModelViewSet):
         user.save()
         return Response({"ok":"password changed successfully"},status=status.HTTP_200_OK)
     
+
+
+
+
     
