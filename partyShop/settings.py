@@ -18,7 +18,7 @@ from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
 
-load_dotenv()
+load_dotenv(".env.container")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -107,19 +107,24 @@ CORS_ALLOW_ALL_ORIGINS=True
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {  
+        'default': {  
         'ENGINE': 'django.db.backends.mysql',  
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASS'),  
-        'HOST': os.getenv("HOST") ,
+        'NAME': os.getenv("DB_NAME"),
+        'USER': os.getenv("DB_USER"),
+        'PASSWORD': os.getenv('DB_PASS'),
+        'HOST': os.getenv('HOST') ,
         'PORT': '3306',  
         'OPTIONS': {  
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"  
-        }  
-    }  
+        }
+        } if os.getenv('DB_NAME') is not None else {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'mydatabase', # This is where you put the name of the db file.
+              # If one doesn't exist, it will be created at migration time. }
+        } 
 
 }
+print(DATABASES)
 
 
 # Password validation
@@ -177,5 +182,26 @@ AUTHENTICATION_BACKENDS = [
 # CELERY_TASK_SERIALIZER = 'json'
 # CELERY_RESULT_SERIALIZER = 'json'
 # CELERY_TIMEZONE = 'UTC'  # or your timezone
+# S3 Settings
+LIARA_ENDPOINT    = os.getenv("LIARA_ENDPOINT")
+LIARA_BUCKET_NAME = os.getenv("LIARA_BUCKET_NAME")
+LIARA_ACCESS_KEY  = os.getenv("LIARA_ACCESS_KEY")
+LIARA_SECRET_KEY  = os.getenv("LIARA_SECRET_KEY")
 
+# S3 Settings Based on AWS (optional)
+AWS_ACCESS_KEY_ID       = LIARA_ACCESS_KEY
+AWS_SECRET_ACCESS_KEY   = LIARA_SECRET_KEY
+AWS_STORAGE_BUCKET_NAME = LIARA_BUCKET_NAME
+AWS_S3_ENDPOINT_URL     = LIARA_ENDPOINT
+AWS_S3_REGION_NAME      = 'us-east-1'  
+
+# Django-storages configuration
+STORAGES = {
+  "default": {
+      "BACKEND": "storages.backends.s3.S3Storage",
+  },
+  "staticfiles": {
+      "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+  },
+}
 

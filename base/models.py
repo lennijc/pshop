@@ -10,7 +10,7 @@ class theme(models.Model):
     category=models.ForeignKey('category',on_delete=models.SET_NULL,null=True)
     href=models.CharField(max_length=255,unique=True)
     price=models.IntegerField(default=0)
-    cover=models.ImageField(null=True,default=None)
+    cover=models.ImageField(null=True,default=None,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     def __str__(self) -> str:
@@ -50,7 +50,7 @@ class Article(models.Model):
     title=models.CharField(max_length=255)
     description=models.TextField()
     body=models.TextField()
-    cover=models.ImageField(null=True,default=None)
+    cover=models.ImageField(upload_to="article_pics",null=True,default=None,blank=True)
     href=models.CharField(max_length=255,unique=True)
     category=models.ForeignKey(category,on_delete=models.PROTECT)
     creator=models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
@@ -101,6 +101,9 @@ class Question(models.Model):
     def __str__(self) -> str:
         return str(self.question + self.answer)[:80]
     
-
-    
-    
+class Banned_user(models.Model):
+    phone = models.CharField(max_length=12, unique=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return self.phone
