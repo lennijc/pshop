@@ -1,0 +1,27 @@
+services:
+  db:
+    image: mysql:8.0
+    env_file:
+      - .env.container
+    restart: always
+    environment:
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysqls
+    ports:
+      - "3307:3306"
+
+  web:
+    build: .
+    restart: on-failure
+    command:  python manage.py runserver 0.0.0.0:8000 
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+volumes:
+  db_data:
