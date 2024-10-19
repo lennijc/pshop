@@ -59,6 +59,12 @@ class categoryModelViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return category.objects.filter(main_category=None)
     
+    @action(detail=False,methods=["get"],permission_classes=[AllowAny])
+    def getAllCategory(self,request,*args,**kwargs):
+        categories=category.objects.all()         
+        serializer = allcategorySerializer(categories,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
 class SignUpAPIView(APIView):
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
