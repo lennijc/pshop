@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 # Create your models here.
 User=get_user_model()
 from django.utils import timezone
+
 class theme(models.Model):
     name=models.CharField(max_length=255)
     description=models.TextField()
@@ -11,10 +12,12 @@ class theme(models.Model):
     href=models.CharField(max_length=255,unique=True)
     price=models.IntegerField(default=0)
     cover=models.ImageField(null=True,default=None,blank=True)
+    discount=models.DecimalField(max_digits=3,decimal_places=0,default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     def __str__(self) -> str:
         return self.name
+
 class category(models.Model):
     title=models.CharField(max_length=255)
     href=models.CharField(max_length=255,unique=True)
@@ -107,3 +110,9 @@ class Banned_user(models.Model):
     updatedAt = models.DateTimeField(auto_now=True)
     def __str__(self):
         return self.phone
+    
+class Off(models.Model):
+    percent=models.DecimalField(max_digits=3,decimal_places=0)
+    theme=models.ForeignKey(theme,on_delete=models.CASCADE)
+    def __str__(self):
+        return str(self.theme) + str(self.percent)

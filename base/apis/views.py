@@ -413,7 +413,22 @@ class UserViewset(viewsets.ModelViewSet):
         user.set_password(serializer.validated_data["new_password"])
         user.save()
         return Response({"ok":"password changed successfully"},status=status.HTTP_200_OK)
-    
+
+class UpdateDiscountAPIView(APIView):
+    permission_classes=[IsAdminUser]
+    def post(self, request, *args, **kwargs):
+        try:
+            discount_percentage=int(request.data["discount"])
+            if discount_percentage>100 or discount_percentage<0:
+                return Response({"error":"discount has to be between 0 to 100"},status=status.HTTP_400_BAD_REQUEST)
+            # Update all courses with the new discount percentage
+            theme.objects.update(discount=discount_percentage)
+            
+            return Response({"message": f"All themes updated with discount: {discount_percentage}%"}, status=status.HTTP_200_OK)
+        except (ValueError,KeyError):
+            return Response({"error": "Invalid discount percentage"}, status=status.HTTP_400_BAD_REQUEST)
+        
+print("here in the view")
 
 
 

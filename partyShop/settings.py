@@ -17,8 +17,10 @@ from dotenv import load_dotenv
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
-
-load_dotenv(".env.container")
+if os.getcwd().strip()[0:2]  in ["D:","C:","F:"]:
+    load_dotenv(".env.container")
+else:
+    load_dotenv(".env")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -124,7 +126,7 @@ DATABASES = {
         } 
 
 }
-print(DATABASES)
+print(f"{str(DATABASES)[0:50]}...")
 
 
 # Password validation
