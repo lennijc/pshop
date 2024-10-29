@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from ..models import theme,category,comment,Article,Question
+from ..models import theme,category,comment,Article,Question,contact,Off
 from django.contrib.auth import get_user_model
 from .serializers import ThemeModelSerializer,categoryModelSerializer
 from rest_framework.views import APIView
@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (SignUpSerializer,userSerializer,allcategorySerializer,
                           commentSerializer,allCommentSerializer,allArticleSerializer,
                           contactserializer,reservationSerializer,reservation as Reservation,normQuestionSerializer,
-                          ChangePasswordSerializer,changeProfileSerializer)
+                          ChangePasswordSerializer,changeProfileSerializer,offSerializer)
 from rest_framework.generics import ListAPIView,RetrieveAPIView
 from rest_framework.decorators import action
 from django.http import QueryDict
@@ -29,6 +29,7 @@ import os
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import io
 from PIL import Image
+from ..tasks import send_email_task
 
 User = get_user_model()
 class ThemeModelViewSet(viewsets.ModelViewSet):
@@ -428,8 +429,30 @@ class UpdateDiscountAPIView(APIView):
         except (ValueError,KeyError):
             return Response({"error": "Invalid discount percentage"}, status=status.HTTP_400_BAD_REQUEST)
         
-print("here in the view")
+class answerContact(APIView):
+    def post(self, request):
+        subject =  "answer to your application of ContactUs page " if request.data.get('subject') is None else  request.data.get('subject')
+        message = request.data.get('message')
+        contact_id = request.data.get('contactID')
 
+        contact_instance = get_object_or_404(contact,id=contact_id)
+        recipient_email=contact_instance.email
+        contact_instance.answer=True
+        # Trigger the async task
+        try:
+            send_email_task.delay(subject, message, recipient_email)
+            return Response({"status": "Email is being sent"}, status=status.HTTP_202_ACCEPTED)
+        except Exception as e :
+            return Response({"error":str(e)},status=status.HTTP_400_BAD_REQUEST)
+        
+class offViewset(viewsets.ModelViewSet):
+    permission_classes=[IsAdminUser]
+    serializer_class=offSerializer
+    queryset=Off.objects.all()
+    def create(self, request, *args, **kwargs):
+        #we dont send the client the creator so we should set that here before passing it to the serialzier and getting error
+        request.data["creator"]=request.user.id
+        return super().create(request, *args, **kwargs)
 
 
 

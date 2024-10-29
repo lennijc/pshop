@@ -177,13 +177,18 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Default backend
 ]
 
-# # Celery Settings
-# CELERY_BROKER_URL = 'redis://redis:6379/0'  # or your broker URL
-# CELERY_RESULT_BACKEND = 'redis://redis:6379/0'  # or your result backend
-# CELERY_ACCEPT_CONTENT = ['json']
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_RESULT_SERIALIZER = 'json'
-# CELERY_TIMEZONE = 'UTC'  # or your timezone
+# Celery Settings
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'  # or your timezone
+# CELERYD_POOL = 'solo'
+# CELERY_TASK_ALWAYS_EAGER = False  # Set to True only if testing Celery sync
+
+
+
 # S3 Settings
 LIARA_ENDPOINT    = os.getenv("LIARA_ENDPOINT")
 LIARA_BUCKET_NAME = os.getenv("LIARA_BUCKET_NAME")
@@ -207,3 +212,11 @@ STORAGES = {
   },
 }
 
+# SMTP SETTINGS
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_USE_TLS = True
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "onyourownsam@gmail.com"
+EMAIL_HOST_PASSWORD = "wtfd etbq hang jpbh"
+DEFAULT_FROM_EMAIL = 'Elearn'

@@ -112,7 +112,13 @@ class Banned_user(models.Model):
         return self.phone
     
 class Off(models.Model):
-    percent=models.DecimalField(max_digits=3,decimal_places=0)
+    percent=models.PositiveSmallIntegerField()
     theme=models.ForeignKey(theme,on_delete=models.CASCADE)
+    code=models.CharField(max_length=20)
+    max=models.PositiveSmallIntegerField(default=3)
+    uses=models.PositiveSmallIntegerField(default=0)
+    creator=models.ForeignKey(User,on_delete=models.CASCADE)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.theme) + str(self.percent)

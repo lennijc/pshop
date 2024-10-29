@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ThemeModelViewSet,SignUpAPIView,categoryModelViewSet,commentViewset,
     getUserInfo,getRelatedTheme,getPopularThemes,getLastThemes,getRelatedSubMenus,searchApi,
-    articleViewset,ContactUsView,reservation_viewset,normQuestionViewset,UserViewset,UpdateDiscountAPIView
+    articleViewset,ContactUsView,reservation_viewset,normQuestionViewset,UserViewset,UpdateDiscountAPIView,answerContact,offViewset
                     )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -18,6 +18,7 @@ router.register(r'article', articleViewset)
 router.register(r'reservation', reservation_viewset,basename="reservations") 
 router.register(r'question', normQuestionViewset,basename="questions") 
 router.register(r'user', UserViewset,basename="users") 
+router.register(r'off', offViewset,basename="offs") 
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -32,4 +33,5 @@ urlpatterns = [
     path('search/<str:query>/', searchApi.as_view(), name='searchQuery'),
     path('contact/', ContactUsView.as_view(), name='contactUs'),
     path('discount/', UpdateDiscountAPIView.as_view(), name='updateDiscount'),
+    path('contact/answer/', answerContact.as_view(), name='answerContact'),
 ]
