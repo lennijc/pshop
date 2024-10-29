@@ -64,6 +64,14 @@ services:
     volumes:
       - ./:/app
 
+  celery-beat:
+    build:
+      context: .
+    command: celery -A partyShop beat -l info
+    depends_on:
+      - redis
+      - web
+
   flower:
     image: mher/flower
     container_name: flower
@@ -75,6 +83,7 @@ services:
       - redis
       - celery  # Match with celery service name
 
+  
 volumes:
   mysql_data:
   redis_data:

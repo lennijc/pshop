@@ -324,7 +324,6 @@ class reservation_viewset(viewsets.ModelViewSet):
     @action(detail=False, methods=['post',"get"], url_path='reserve/(?P<theme_href>[^/.]+)',permission_classes=[IsAuthenticated])
     def process_step(self, request, theme_href=None):
         #getting the occurring reservation
-        print("in the view")
         if request.method == "GET":
             reservation=get_object_or_404(Reservation,customer=request.user ,theme=get_object_or_404(theme,href=theme_href))
             serializer=self.get_serializer(reservation)
@@ -339,7 +338,6 @@ class reservation_viewset(viewsets.ModelViewSet):
                 return Response({"error":"incorrect request body given"},status=status.HTTP_400_BAD_REQUEST)
             
             state=list(request.data.keys())[0]
-            print("state is ", state)
             theme_instance=get_object_or_404(theme,href=theme_href)
             reservation, created = Reservation.objects.get_or_create(customer=request.user, theme=theme_instance)
             if state == 'color':
