@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (SignUpSerializer,userSerializer,allcategorySerializer,
                           commentSerializer,allCommentSerializer,allArticleSerializer,
                           contactserializer,reservationSerializer,reservation as Reservation,normQuestionSerializer,
-                          ChangePasswordSerializer,changeProfileSerializer,offSerializer)
+                          ChangePasswordSerializer,changeProfileSerializer,offSerializer,base_comment_serializer)
 from rest_framework.generics import ListAPIView,RetrieveAPIView
 from rest_framework.decorators import action
 from django.http import QueryDict
@@ -65,6 +65,13 @@ class categoryModelViewSet(viewsets.ModelViewSet):
         categories=category.objects.all()         
         serializer = allcategorySerializer(categories,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
+
+#only for submenues    
+class subCategoryModelViewSet(viewsets.ModelViewSet):
+    serializer_class=allcategorySerializer
+    permission_classes=[isAdminOrReadonly]
+    def get_queryset(self):
+        return category.objects.exclude(main_category=None)
     
 class SignUpAPIView(APIView):
     def post(self, request):
@@ -87,7 +94,7 @@ class commentViewset(viewsets.ModelViewSet):
         if self.request.method in SAFE_METHODS:
             return allCommentSerializer
         else:
-            return commentSerializer
+            return base_comment_serializer
     #sending commnet via post request    
     # def create(self, request, *args, **kwargs):
     #     theme_href=request.data.pop("themeHref")
@@ -97,9 +104,11 @@ class commentViewset(viewsets.ModelViewSet):
     #     return super().create(request,*args,**kwargs)
     @action(detail=False, methods=["post"],url_path='post_comment/(?P<href>[^/.]+)',permission_classes=[IsAuthenticated])
     def post_comment(self,request,*args,**kwargs):
+        print("print kwargs is : ", kwargs)
         theme_instance=get_object_or_404(theme,href=self.kwargs["href"])
         request.data["theme"]=theme_instance.id
         request.data["creator"]=request.user.id
+        print(request.data)
         return super().create(request,*args,**kwargs)
     
     @action(detail=True, methods=["post"],permission_classes=[IsAuthenticated])

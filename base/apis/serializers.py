@@ -83,6 +83,12 @@ class allArticleSerializer(serializers.ModelSerializer):
         fields = '__all__'
     # def get_average_score(self,obj):
     #     return obj.comments.aggregate(Avg('score'))['score__avg']
+
+class base_comment_serializer(serializers.ModelSerializer):
+    class Meta:
+        model = comment
+        fields = "__all__"
+
 class commentSerializer(serializers.ModelSerializer):
     creator=userSerializer(read_only=True)
     class Meta:
