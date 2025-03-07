@@ -36,6 +36,7 @@ class ThemeModelViewSet(viewsets.ModelViewSet):
     queryset = theme.objects.all().prefetch_related("comments")
     serializer_class = ThemeModelSerializer
     permission_classes=[isAdminOrReadonly]
+    parser_classes=[MultiPartParser,FormParser]
     @action(detail=False, methods=['get'], url_path='category/(?P<href>[^/.]+)',permission_classes=[AllowAny])
     def themes_by_category(self, request, href=None):
         #get the href of the category and return the corresponding themes.
@@ -62,7 +63,7 @@ class categoryModelViewSet(viewsets.ModelViewSet):
     
     @action(detail=False,methods=["get"],permission_classes=[AllowAny])
     def getAllCategory(self,request,*args,**kwargs):
-        categories=category.objects.all()         
+        categories = category.objects.all()         
         serializer = allcategorySerializer(categories,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
 
@@ -70,8 +71,15 @@ class categoryModelViewSet(viewsets.ModelViewSet):
 class subCategoryModelViewSet(viewsets.ModelViewSet):
     serializer_class=allcategorySerializer
     permission_classes=[isAdminOrReadonly]
+    parser_classes=[MultiPartParser,FormParser]
     def get_queryset(self):
         return category.objects.exclude(main_category=None)
+    
+    def create(self, request, *args, **kwargs):
+        print("request.data is: " , request.data)
+        if request.data.get("main_category") is None:
+            return Response({"error":"main_category cannot be null"} , status=status.HTTP_400_BAD_REQUEST)   
+        return super().create(request, *args, **kwargs)
     
 class SignUpAPIView(APIView):
     def post(self, request):
