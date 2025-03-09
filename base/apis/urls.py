@@ -3,8 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ThemeModelViewSet,SignUpAPIView,categoryModelViewSet,commentViewset,
     getUserInfo,getRelatedTheme,getPopularThemes,getLastThemes,getRelatedSubMenus,searchApi,
-    articleViewset,ContactUsView,reservation_viewset,normQuestionViewset,UserViewset,UpdateDiscountAPIView,answerContact,offViewset,subCategoryModelViewSet
-                    )
+    articleViewset,ContactUsView,reservation_viewset,normQuestionViewset,UserViewset,UpdateDiscountAPIView,answerContact,offViewset,
+    subCategoryModelViewSet,contactViewSet    )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -20,6 +20,7 @@ router.register(r'reservation', reservation_viewset,basename="reservations")
 router.register(r'question', normQuestionViewset,basename="questions") 
 router.register(r'user', UserViewset,basename="users") 
 router.register(r'off', offViewset,basename="offs") 
+router.register(r'Contact', contactViewSet,basename="contact") 
 
 urlpatterns = [
     path('', include(router.urls)),

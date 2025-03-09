@@ -13,16 +13,23 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv , find_dotenv
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
-if os.getcwd().strip()[0:2]  in ["D:","C:","F:"]:
-    load_dotenv(".env.container")
-else:
-    load_dotenv(".env")
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+if os.getcwd().strip()[0:2]  in ["D:","C:","F:"]:
+    env_local_path = find_dotenv(filename=".env.local")
+    load_dotenv(dotenv_path=str(env_local_path),override=True)
+else:
+    env_path = find_dotenv(filename=".env.container")
+    load_dotenv(dotenv_path= str(env_path), override=True)
+    print("here we are in the .env")
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -115,7 +122,7 @@ DATABASES = {
         'USER': os.getenv("DB_USER"),
         'PASSWORD': os.getenv('DB_PASS'),
         'HOST': os.getenv('HOST') ,
-        'PORT': '3306',  
+        'PORT': 3306 ,  
         'OPTIONS': {  
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"  
         }

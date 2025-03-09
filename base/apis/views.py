@@ -146,15 +146,15 @@ class commentViewset(viewsets.ModelViewSet):
         #     return Response({"error":str(e)},status=status.HTTP_400_BAD_REQUEST)
     #get the comments in the theme info page base on the href of the theme being sent by client
     @action(detail=False,methods=["GET"],url_path='theme_comments/(?P<href>[^/.]+)')
-    def theme_comments(self,request,*args,**kwargs):
-        theme_instance=get_object_or_404(theme,href=kwargs["href"])
-        comments=comment.objects.filter(theme=theme_instance.id)
-        average_score=comments.aggregate(Avg("score"))["score__avg"]
-        comments_serializer=allCommentSerializer(comments,many=True,context={"average_score":average_score})
+    def theme_comments(self, request, *args, **kwargs):
+        theme_instance = get_object_or_404(theme,href=kwargs["href"])
+        comments = comment.objects.filter(theme=theme_instance.id , isAnswer = False)
+        average_score = comments.aggregate(Avg("score"))["score__avg"]
+        comments_serializer = allCommentSerializer(comments, many = True, context = {"average_score" : average_score})
         return Response(comments_serializer.data,status=status.HTTP_200_OK)
     
     @action(methods=['put'], detail=True)
-    def accept_reject_comment(self, request,*args,**kwargs):
+    def accept_reject_comment(self, request, *args, **kwargs):
         """
         Toggle the 'answer' field of a comment.
         """
@@ -327,12 +327,7 @@ def upload_image(file: InMemoryUploadedFile):
     #     except:
     #         return Response({"error":"something went wronge"},status=status.HTTP_400_BAD_REQUEST)
     
-class ContactUsView(APIView):
-    def post(self, request, format=None):
-        serializer = contactserializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
             
 class reservation_viewset(viewsets.ModelViewSet):
     permission_classes=[IsAuthenticated]
@@ -396,7 +391,7 @@ class UserViewset(viewsets.ModelViewSet):
     permission_classes=[IsAdminUser]
     queryset=User.objects.all()
     def get_object(self):
-        if self.action=="change_profile" or "change_password":
+        if self.action == "change_profile" or self.action == "change_password":
             return User.objects.get(id=self.request.user.id)
         return super().get_object()
     
@@ -443,7 +438,12 @@ class UpdateDiscountAPIView(APIView):
             return Response({"message": f"All themes updated with discount: {discount_percentage}%"}, status=status.HTTP_200_OK)
         except (ValueError,KeyError):
             return Response({"error": "Invalid discount percentage"}, status=status.HTTP_400_BAD_REQUEST)
-        
+class ContactUsView(APIView):
+    def post(self, request, format=None):
+        serializer = contactserializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)       
 class answerContact(APIView):
     def post(self, request):
         subject =  "answer to your application of ContactUs page " if request.data.get('subject') is None else  request.data.get('subject')
@@ -459,7 +459,12 @@ class answerContact(APIView):
             return Response({"status": "Email is being sent"}, status=status.HTTP_202_ACCEPTED)
         except Exception as e :
             return Response({"error":str(e)},status=status.HTTP_400_BAD_REQUEST)
-        
+
+class contactViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAdminUser]
+    serializer_class = contactserializer
+    queryset = contact.objects.all()
+    
 class offViewset(viewsets.ModelViewSet):
     permission_classes=[IsAdminUser]
     serializer_class=offSerializer
@@ -468,6 +473,7 @@ class offViewset(viewsets.ModelViewSet):
         #we dont send the client the creator so we should set that here before passing it to the serialzier and getting error
         request.data["creator"]=request.user.id
         return super().create(request, *args, **kwargs)
+    
 
 
 

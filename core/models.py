@@ -41,6 +41,10 @@ class user(AbstractUser):
     USERNAME_FIELD = 'phone'
     REQUIRED_FIELDS = ["name","password"]
     objects = UserManager()
+    @property
+    def is_admin(self):
+        return self.is_staff
+    
     def __str__(self) -> str:
         return self.name
     class Meta:

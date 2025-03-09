@@ -104,6 +104,7 @@ class allCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model=comment
         fields="__all__"
+    
         
 class reservationSerializer(serializers.ModelSerializer):
     class Meta:
