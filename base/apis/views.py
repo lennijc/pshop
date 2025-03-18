@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (SignUpSerializer,userSerializer,allcategorySerializer,
                           commentSerializer,allCommentSerializer,allArticleSerializer,
                           contactserializer,reservationSerializer,reservation as Reservation,normQuestionSerializer,
-                          ChangePasswordSerializer,changeProfileSerializer,offSerializer,base_comment_serializer)
+                          ChangePasswordSerializer,changeProfileSerializer,offSerializer,base_comment_serializer,noStatusReservationSerializer)
 from rest_framework.generics import ListAPIView,RetrieveAPIView
 from rest_framework.decorators import action
 from django.http import QueryDict
@@ -222,13 +222,18 @@ class searchApi(APIView):
         return Response({"themes":theme_serializer.data,"articles":article_serializer.data})
     
 class articleViewset(viewsets.ModelViewSet):
-    queryset = Article.objects.all()
     permission_classes=[isAdminOrReadonly]
     serializer_class=allArticleSerializer
     parser_classes=[MultiPartParser]
-    @action(detail=True,methods=["get"],permission_classes=[AllowAny])
-    def articleInfo(self,request,*args,**kwargs):
-        article_instance=get_object_or_404(Article,href=kwargs["pk"])         
+    def get_queryset(self):
+        if self.request.user.is_staff == True:
+            return Article.objects.all() #show draft articles only to admins
+        
+        return Article.objects.filter(publish=True)
+    
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny], url_path='article_info/(?P<href>[^/.]+)')
+    def article_info(self, request, *args, **kwargs):
+        article_instance=get_object_or_404(Article,href=kwargs["href"], publish=True)         
         serializer = self.get_serializer(article_instance)
         return Response(serializer.data,status=status.HTTP_200_OK)  
     
@@ -424,7 +429,13 @@ class UserViewset(viewsets.ModelViewSet):
         user.set_password(serializer.validated_data["new_password"])
         user.save()
         return Response({"ok":"password changed successfully"},status=status.HTTP_200_OK)
-
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def get_reservations(self, request):
+        reservations = Reservation.objects.filter(customer=request.user)
+        serialized_reservations = noStatusReservationSerializer(reservations, many=True)
+        return Response(serialized_reservations.data, status=status.HTTP_200_OK)
+    
 class UpdateDiscountAPIView(APIView):
     permission_classes=[IsAdminUser]
     def post(self, request, *args, **kwargs):
@@ -438,6 +449,7 @@ class UpdateDiscountAPIView(APIView):
             return Response({"message": f"All themes updated with discount: {discount_percentage}%"}, status=status.HTTP_200_OK)
         except (ValueError,KeyError):
             return Response({"error": "Invalid discount percentage"}, status=status.HTTP_400_BAD_REQUEST)
+        
 class ContactUsView(APIView):
     def post(self, request, format=None):
         serializer = contactserializer(data=request.data)

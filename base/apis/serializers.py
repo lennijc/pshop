@@ -110,7 +110,11 @@ class reservationSerializer(serializers.ModelSerializer):
     class Meta:
         model=reservation
         fields="__all__"
-        
+
+class noStatusReservationSerializer(serializers.Serializer):
+    class Meta:
+        model=reservation
+        exclude='status'
 class normQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model=Question
