@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (SignUpSerializer,userSerializer,allcategorySerializer,
                           commentSerializer,allCommentSerializer,allArticleSerializer,
                           contactserializer,reservationSerializer,reservation as Reservation,normQuestionSerializer,
-                          ChangePasswordSerializer,changeProfileSerializer,offSerializer,base_comment_serializer,noStatusReservationSerializer)
+                          ChangePasswordSerializer,changeProfileSerializer,offSerializer,base_comment_serializer,noStatusReservationSerializer,readReservationSerializer)
 from rest_framework.generics import ListAPIView,RetrieveAPIView
 from rest_framework.decorators import action
 from django.http import QueryDict
@@ -338,11 +338,17 @@ class reservation_viewset(viewsets.ModelViewSet):
     permission_classes=[IsAuthenticated]
     serializer_class=reservationSerializer
     queryset=Reservation.objects.all()
+    def get_serializer_class(self, *args, **kwargs):
+        if self.request.method in SAFE_METHODS:
+            print('we are in the get seriakzier class method with the method : ' , self.request.method)
+            return readReservationSerializer
+        return reservationSerializer
+    
     @action(detail=False, methods=['post',"get"], url_path='reserve/(?P<theme_href>[^/.]+)',permission_classes=[IsAuthenticated])
     def process_step(self, request, theme_href=None):
         #getting the occurring reservation
         if request.method == "GET":
-            reservation=get_object_or_404(Reservation,customer=request.user ,theme=get_object_or_404(theme,href=theme_href))
+            reservation=get_object_or_404(Reservation, customer=request.user ,theme=get_object_or_404(theme,href=theme_href))
             serializer=self.get_serializer(reservation)
             return Response(serializer.data,status=status.HTTP_200_OK)
         

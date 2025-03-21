@@ -111,6 +111,13 @@ class reservationSerializer(serializers.ModelSerializer):
         model=reservation
         fields="__all__"
 
+class readReservationSerializer(serializers.ModelSerializer):
+    theme = ThemeModelSerializer(read_only=True)
+    customer = userSerializer(read_only=True)
+    class Meta:
+        model = reservation
+        fields='__all__'
+
 class noStatusReservationSerializer(serializers.Serializer):
     class Meta:
         model=reservation
