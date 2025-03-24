@@ -17,5 +17,8 @@ def send_email_task(subject, message, recipient_email):
 
 @shared_task
 def delete_expired_reservations():
-    expired_time = timezone.now() - timedelta(minutes=2)
-    reservation.objects.filter(status='pending', createdAt__lt=expired_time).delete()
+    #this has to change to cancell pending reservations
+    reservations = reservation.objects.filter(status='pending', createdAt__lt=timezone.now() - timedelta(minutes=2))
+    for res in reservations:
+        res.status = 'cancelled'
+        res.save()

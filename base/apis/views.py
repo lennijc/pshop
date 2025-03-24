@@ -348,7 +348,7 @@ class reservation_viewset(viewsets.ModelViewSet):
     def process_step(self, request, theme_href=None):
         #getting the occurring reservation
         if request.method == "GET":
-            reservation=get_object_or_404(Reservation, customer=request.user ,theme=get_object_or_404(theme,href=theme_href))
+            reservation=get_object_or_404(Reservation, customer=request.user ,theme=get_object_or_404(theme,href=theme_href))                
             serializer=self.get_serializer(reservation)
             return Response(serializer.data,status=status.HTTP_200_OK)
         
@@ -363,6 +363,8 @@ class reservation_viewset(viewsets.ModelViewSet):
             state=list(request.data.keys())[0]
             theme_instance=get_object_or_404(theme,href=theme_href)
             reservation, created = Reservation.objects.get_or_create(customer=request.user, theme=theme_instance)
+            if reservation.status == "paid" or reservation.status == "cancelled":
+                return Response({"error":"reservation process is done or cancelled thus cannot be changed"},status=status.HTTP_400_BAD_REQUEST)
             if state == 'color':
                 print(request.data.get("color"))
                 reservation.color=request.data.get("color")
@@ -384,7 +386,7 @@ class reservation_viewset(viewsets.ModelViewSet):
                     return Response({'error': 'color and date is required before address'}, status=status.HTTP_400_BAD_REQUEST)
                 reservation.address=request.data.get("address")
                 reservation.location=request.data.get("location")
-                reservation.status="done"
+                reservation.status="paid"
                 reservation.save()
                 serializer=self.get_serializer(reservation)
                 return Response({'address set': serializer.data}, status=status.HTTP_200_OK)
