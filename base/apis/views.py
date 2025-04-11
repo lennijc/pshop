@@ -9,7 +9,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (SignUpSerializer,userSerializer,allcategorySerializer,
                           commentSerializer,allCommentSerializer,allArticleSerializer,
                           contactserializer,reservationSerializer,reservation as Reservation,normQuestionSerializer,
-                          ChangePasswordSerializer,changeProfileSerializer,offSerializer,base_comment_serializer,noStatusReservationSerializer,readReservationSerializer)
+                          ChangePasswordSerializer,changeProfileSerializer,offSerializer,base_comment_serializer,noStatusReservationSerializer,readReservationSerializer,
+                          CustomTokenObtainPairSerializer)
 from rest_framework.generics import ListAPIView,RetrieveAPIView
 from rest_framework.decorators import action
 from django.http import QueryDict
@@ -30,8 +31,12 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 import io
 from PIL import Image
 from ..tasks import send_email_task
-
+from rest_framework_simplejwt.views import TokenObtainPairView as baseTokenObtainPairView
 User = get_user_model()
+
+class TokenObtainPairView(baseTokenObtainPairView):
+    serializer_class=CustomTokenObtainPairSerializer #custome one with the same name
+    
 class ThemeModelViewSet(viewsets.ModelViewSet):
     queryset = theme.objects.all().prefetch_related("comments")
     serializer_class = ThemeModelSerializer
@@ -76,7 +81,7 @@ class subCategoryModelViewSet(viewsets.ModelViewSet):
         return category.objects.exclude(main_category=None)
     
     def create(self, request, *args, **kwargs):
-        print("request.data is: " , request.data)
+
         if request.data.get("main_category") is None:
             return Response({"error":"main_category cannot be null"} , status=status.HTTP_400_BAD_REQUEST)   
         return super().create(request, *args, **kwargs)
@@ -112,11 +117,9 @@ class commentViewset(viewsets.ModelViewSet):
     #     return super().create(request,*args,**kwargs)
     @action(detail=False, methods=["post"],url_path='post_comment/(?P<href>[^/.]+)',permission_classes=[IsAuthenticated])
     def post_comment(self,request,*args,**kwargs):
-        print("print kwargs is : ", kwargs)
         theme_instance=get_object_or_404(theme,href=self.kwargs["href"])
         request.data["theme"]=theme_instance.id
         request.data["creator"]=request.user.id
-        print(request.data)
         return super().create(request,*args,**kwargs)
     
     @action(detail=True, methods=["post"],permission_classes=[IsAuthenticated])
@@ -239,7 +242,6 @@ class articleViewset(viewsets.ModelViewSet):
     
     @action(detail=False,methods=["post"],permission_classes=[AllowAny])
     def publish_article(self,request,*args,**kwargs):
-        print(request.data)
         serializer = allArticleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         image_url=upload_image(request.FILES.get("cover"))
@@ -340,7 +342,6 @@ class reservation_viewset(viewsets.ModelViewSet):
     queryset=Reservation.objects.all()
     def get_serializer_class(self, *args, **kwargs):
         if self.request.method in SAFE_METHODS:
-            print('we are in the get seriakzier class method with the method : ' , self.request.method)
             return readReservationSerializer
         return reservationSerializer
     
@@ -366,7 +367,6 @@ class reservation_viewset(viewsets.ModelViewSet):
             if reservation.status == "paid" or reservation.status == "cancelled":
                 return Response({"error":"reservation process is done or cancelled thus cannot be changed"},status=status.HTTP_400_BAD_REQUEST)
             if state == 'color':
-                print(request.data.get("color"))
                 reservation.color=request.data.get("color")
                 reservation.save()
                 serializer=self.get_serializer(reservation)

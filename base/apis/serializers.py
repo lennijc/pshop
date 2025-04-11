@@ -4,8 +4,34 @@ from django.contrib.auth import get_user_model
 from rest_framework.serializers import PrimaryKeyRelatedField
 from django.db.models import Avg
 from django.contrib.auth.password_validation import validate_password
-
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as baseTokenObtainPairSerializer
+from rest_framework.response import Response
+from rest_framework import status
 User=get_user_model()
+class CustomTokenObtainPairSerializer(baseTokenObtainPairSerializer):  # Inherit from PAIR serializer
+    username = serializers.CharField(required=False)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields[self.username_field].required=False
+        
+    def validate(self, attrs):
+        username = attrs.pop('username', None)
+        if username and self.username_field in self.fields:
+            raise serializers.ValidationError("should either have phone or username not both")
+
+        if username:
+            User = get_user_model()
+            try:
+                print("username is : ", username)
+                user = User.objects.get(name=username)
+                attrs[self.username_field] = getattr(user, self.username_field)
+            except User.DoesNotExist:
+                print("here in the does not exist we are")
+                raise serializers.ValidationError("No user with this credentials exists.")
+        
+        # Calls TokenObtainPairSerializer.validate() which handles token generation
+        return super().validate(attrs)  
+
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)

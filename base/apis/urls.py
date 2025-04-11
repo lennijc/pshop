@@ -4,11 +4,12 @@ from .views import (
     ThemeModelViewSet,SignUpAPIView,categoryModelViewSet,commentViewset,
     getUserInfo,getRelatedTheme,getPopularThemes,getLastThemes,getRelatedSubMenus,searchApi,
     articleViewset,ContactUsView,reservation_viewset,normQuestionViewset,UserViewset,UpdateDiscountAPIView,answerContact,offViewset,
-    subCategoryModelViewSet,contactViewSet    )
+    subCategoryModelViewSet,contactViewSet,TokenObtainPairView)
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
+    TokenObtainPairView as baseTokenObtainPairView,
     TokenRefreshView,
 )
+
 
 router = DefaultRouter()
 router.register(r'theme', ThemeModelViewSet)
