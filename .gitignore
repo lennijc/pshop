@@ -3,3 +3,4 @@ venv/
 myvenv/
 .env.local
 .env
+mydatabase
