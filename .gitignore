@@ -2,3 +2,4 @@ venv/
 .dockerignore
 myvenv/
 .env.local
+.env
