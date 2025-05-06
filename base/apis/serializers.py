@@ -16,9 +16,6 @@ class CustomTokenObtainPairSerializer(baseTokenObtainPairSerializer):  # Inherit
         
     def validate(self, attrs):
         username = attrs.pop('username', None)
-        if username and self.username_field in self.fields:
-            raise serializers.ValidationError("should either have phone or username not both")
-
         if username:
             User = get_user_model()
             try:

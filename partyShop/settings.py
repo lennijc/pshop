@@ -25,8 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 if os.getcwd().strip()[0:2]  in ["D:","C:","F:"]:
     env_local_path = find_dotenv(filename=".env.local")
     load_dotenv(dotenv_path=str(env_local_path),override=True)
+    print(os.getenv("DB_NAME"))
 else:
-    env_path = find_dotenv(filename=".env.container")
+    env_path = find_dotenv(filename=".env")
     load_dotenv(dotenv_path= str(env_path), override=True)
     print("here we are in the .env")
 
@@ -133,7 +134,7 @@ DATABASES = {
         'USER': os.getenv("DB_USER"),
         'PASSWORD': os.getenv('DB_PASS'),
         'HOST': os.getenv('HOST') ,
-        'PORT': 3306 ,  
+        'PORT': os.getenv('DB_PORT') ,  
         'OPTIONS': {  
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"  
         }
